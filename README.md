@@ -147,6 +147,15 @@ Cuando la mascota no se encuentra reaizando ninguna actividad ni tiene ninguna n
 
 ![image](https://github.com/user-attachments/assets/120bfba0-9d98-4145-b4b7-b72424e44615)
 
+## Diagramas
+
+![image](https://github.com/user-attachments/assets/760c7564-6907-47f7-a4dc-71ff579cf3e7)
+
+Por simplicidad se apartan los modulos de control de la pantalla y las imágenes a ser mostradas en la misma, los gráficos, contenidos en el módulo sprites, contienen los pasos para dibujar cada uno de los gráficos, y envía la información al módulo de control spi, manteniendo dibujando a la pantalla constantemente.
+
+Dado que se pretende dibujar constantemente y existen animaciones es necesario generar distintos relojes de distintas frecuencias a fin de coordinar todas las posibles velocidades de juego.
+
+El módulo statemaster es el regulador de los posibles estados y valores pertinentes para el juego, dependiendo de esta información (enviada al módulo sprites) se deciden que gráficos se dibujan.
 
 
 
