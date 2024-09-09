@@ -37,13 +37,13 @@ always @(posedge enable) begin
 		end else begin
 			count<= count+1;
 			an<=6'b111111; 
-			case (count) 
-				3'h0: begin bcd <= num%10;   an<=6'b111110; end 
-				3'h1: begin bcd <= (((num - (num % 10)) / 10) % 10);   an<=6'b111101; end 
-				3'h2: begin bcd <= (((num - (num % 100)) / 100) % 10);  an<=6'b111011; end 
-				3'h3: begin bcd <= (((num - (num % 1000)) / 1000) % 10); an<=6'b110111; end 
-				3'h4: begin bcd <= (((num - (num % 10000)) / 10000)% 10); an<=6'b101111; end
-				3'h5: begin bcd <= (((num - (num % 100000)) / 100000)% 10); an<=6'b011111; end
+			case (count) 	
+				3'h0: begin bcd <= num[5:0] % 10;   an<=6'b111110; end 
+				3'h1: begin bcd <= (((num[5:0] - (num[5:0] % 10)) / 10) % 10);   an<=6'b111101; end 
+				3'h2: begin bcd <= num[11:6] % 10;  an<=6'b111011; end 
+				3'h3: begin bcd <= (((num[11:6] - (num[11:6] % 10)) / 10) % 10); an<=6'b110111; end 
+				3'h4: begin bcd <= num[17:12] % 10; an<=6'b101111; end
+				3'h5: begin bcd <= (((num[17:12] - (num[17:12] % 10)) / 10) % 10); an<=6'b011111; end
 			endcase
 		end
 end

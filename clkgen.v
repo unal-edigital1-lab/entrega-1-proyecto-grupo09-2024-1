@@ -1,25 +1,38 @@
-module clkgen(clkin,clkout,divisor);
+module clkgen(clkin,clkoutV, clkout1s, Mdivisor);
 
+input [2:0] Mdivisor;
 input clkin;
-
-input [31:0] divisor;
-
-output reg clkout; // output clock after dividing the input clock by divisor
+output reg clkoutV; // output clock after dividing the input clock by divisor
+output reg clkout1s; 
 
 reg[27:0] counter=28'd0;
+reg [4:0] vtime=7;
+reg [4:0] vtime1s=31;
 
-parameter DIVISOR = 28'd50000000;
-// The frequency of the output clk_out
-//  = The frequency of the input clk_in divided by DIVISOR
-// For example: Fclk_in = 50Mhz, if you want to get 1Hz signal to blink LEDs
-// You will modify the DIVISOR parameter value to 28'd50.000.000
-// Then the frequency of the output clk_out = 50Mhz/50.000.000 = 1Hz
+parameter divisor = 781250;
+
+//Mdivisor guide:
+// 0 = x16
+// 1 = x8
+// 2 = x4
+// 3 = x2
+// 4 = x1
 
 always @(posedge clkin)
-begin
- counter <= counter + 1;
- if(counter>=(divisor-1))
-  counter <= 28'd0;
-  clkout <= (counter<divisor/2)?1'b1:1'b0;
-end
+	begin
+		counter <= counter + 1;
+		if(counter==divisor-1)begin
+			counter <= 28'd0;
+			vtime <=vtime-1;
+			vtime1s <=vtime1s-1;
+			if (vtime ==0) begin 
+				clkoutV = ~clkoutV;
+				vtime <= (2 << Mdivisor)-1;
+			end 
+			if (vtime1s ==0) begin 
+				clkout1s = ~clkout1s;
+				vtime1s <= 31;
+			end 	
+		end
+	end
 endmodule
