@@ -5,21 +5,26 @@
 * Daniel Esteban Hostos
 ## Características Generales
 
-El dispositivo cuenta con los siguientes botones para la interacción del ususario:
+El dispositivo cuenta con los siguientes botones para la interacción del usuario:
 
 - Reset
 - Alimentar
 - Jugar
-- Acelerar
 - Test
 
 
 Y los siguientes sensores de entorno para interactuar con el mundo real:
 
-- Sensor digital de sonido
-- Sensor digital de luz
+- Sensor digital de sonido KY-037
+  ![sound-detection-sensor-module-analog-type-tech3254-2910-1](https://github.com/user-attachments/assets/9c4fbb6a-abda-4235-be87-2685cf2ae8f3)
 
-Toda la información se desplegará en una pantalla monocromática de 48x84 píxeles
+- Sensor digital de luz LM393
+  ![1200](https://github.com/user-attachments/assets/887f02c0-d403-42a8-85f1-0686fdd790e3)
+
+Para mostrar la información se usará una pantalla monocromática Nokia 5110 de 84x48 pixeles
+  ![PANTALLA-NOKIA-5110](https://github.com/user-attachments/assets/d969fd96-ef69-4490-abf3-62f4e16ec10e)
+
+
 
 ## Descripción General
 
@@ -30,6 +35,8 @@ Se considera que un juego inicia cuando:
 - Se ha presionado el botón Reset durante 5 segundos.
 - Estando en modo Test, se presiona el botón Test durante 5 segundos.
 
+La mascota cuenta con las siguientes características:
+
 - Salud - Medida en corazones, con un máximo de 3, representa el nivel combinado de bienestar de la mascota en base a su felicidad, energía y hambre
 - Felicidad - Medida en caritas felices, con un máximo de 3, si llega a cero la mascota muere de depresión
 - Energía - Medida en niveles de batería, con máximo de 4, si llega a cero la mascota muere de cansancio
@@ -39,23 +46,21 @@ La mascota se ve afectada por dos variables del mundo real: sonido y luz
 
 ### Tiempo
 
-Inicialmente 1 día en tiempo de juego es equivalente a un día real, sin embargo esta equivalencia puede alterarse con el botón de aceleración, al presionarlo una vez se puede variar entre 4 duraciones de un día completo en el tiempo del juego, las cuales son: 24h, 12h, 3h y 1h. 
+Inicialmente 1 día en tiempo de juego es equivalente a un día real, sin embargo esta equivalencia puede alterarse con el botón Reset, este botón únicamente reinicia la partida al mantenerse pulsado durante 5 segundos, pero al presionarlo una vez de manera breve se puede variar entre 4 aceleradores tiempo de juego, los cuales son: X1, X2, X4, X8 y X16. 
 
 ### Felicidad, Energía y Hambre
 
-La mascota inicia el juego con las cuatro variables en su valor máximo. Y se considera que el instante en el que se inicia el juego es el instante en el que jugó, comió y durmió por última vez.
-
 La disminución de las variables se lleva a cabo de la siguiente manera:
 
-- Su nivel de Felicidad disminuye a un ritmo de una carita feliz cada tres horas de tiempo de juego desde la última vez que jugó.
-- Su nivel de Energía disminuye a un ritmo de un nivel cada dos horas de tiempo de juego desde la última vez que durmió.
-- Su nivel de Hambre disminuye a un ritmo de un hueso cada 4 horas de tiempo de juego desde la última vez que fue alimentado. 
+- Su nivel de Felicidad disminuye a un ritmo de una carita feliz cada 6 horas de tiempo de juego desde la última vez que jugó.
+- Su nivel de Energía disminuye a un ritmo de un nivel cada 2 horas de tiempo de juego desde la última vez que durmió.
+- Su nivel de Hambre disminuye a un ritmo de un hueso cada 8 horas de tiempo de juego desde la última vez que fue alimentado. 
 
 Como limitante de dificultad, la mascota no puede ser alimentada más de una vez por hora en tiempo de juego.
 
 Así mismo, la mascota debe tener un plazo de descanso de al menos dos horas antes de jugar nuevamente.
 
-Un nivel de energía es recuperado por cada hora de sueño consecutivo que logre la mascota.
+Un nivel de energía es recuperado cada 3 horas de sueño consecutivo que logre la mascota.
 
 ### Luz y Sonido
 
