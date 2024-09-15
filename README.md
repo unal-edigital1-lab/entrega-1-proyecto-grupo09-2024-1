@@ -152,6 +152,57 @@ Cuando la mascota no se encuentra reaizando ninguna actividad ni tiene ninguna n
 
 ![image](https://github.com/user-attachments/assets/120bfba0-9d98-4145-b4b7-b72424e44615)
 
+## Arquitectura
+### Comunicación SPI
+
+La comunicación con la pantalla se da mediante el protocolo spi, con la ventaja añadida de no contar con la existencia de MOSI (Master Output Slave Input), puesto que la pantalla es, en todo momento, un elemento pasivo.
+
+Las variables encargadas de modular la pantalla son las siguientes:
+
+Reset: Activa en 1, regresa la pantalla a su estado inicial, borrando en su totalidad la pantalla y requiriendo una nueva inicialización de parámetros de dibujado (entre los especificados por el fabricante)
+
+Chip Enable:  Activa en 0, permite el ingreso de datos a la pantalla, ya sean parámetros de dibujado o datos a dibujar.
+
+DC: Activa en 1 para dibujar datos en la pantalla, en 0 permite el cambio de los parámetros de dibujado, tales como posición horizontal y vertical para dibujar, activar o desactivar modo inverso de coloreado y cambiar la orientación de dibujado.
+
+Serial Data In: Datos acumulados en bytes, pueden ser comandos o datos a dibujar.
+
+Serial Clock: Reloj que rige todos los procesos de la pantalla. 
+
+La pantalla requiere un pulso de RES inmediatamente después de inicializar, junto a un set específico de comandos inmediatamente después para que se ejecute la pantalla en modo “normal”, es decir, con dibujado horizontal y modo normal de coloreado, estos son especificados por el fabricante:
+
+![Screenshot from 2024-08-21 20-41-57](https://github.com/user-attachments/assets/8c1132ff-ee28-411c-85b9-6244307632c2)
+
+La lectura de datos se ejecuta de acuerdo al siguiente gráfico especificado por el fabricante 
+
+En este se puede apreciar como toda la lógica se rige con lectura en el surco positivo del reloj de la pantalla, por ello mismo es necesario decidir una de varias posibilidades: realizar la lectura de datos para enviar a la pantala en el flanco negativo, hacer los cambios en el mismo surco positivo teniendo en cuenta el retraso de un ciclo de reloj o realizar los posibles cambios con un reloja de mayor frecuencia durante alguno de los surcos, no en los flancos.
+
+Por simplicidad se decidió en la segunda, para mantener consistencia en la lectura de datos, permanentemente en el flanco positivo.
+
+![Screenshot from 2024-08-21 19-25-51](https://github.com/user-attachments/assets/80fdaa8e-ffda-4477-b110-a80c9fba5295)
+
+![image](https://github.com/user-attachments/assets/877a0157-4958-40d7-9703-71621a55d97e)
+
+Se puede notar que el cambio de mosi se ejecuta al flanco positivo de sclk, que corresponde al reloj que rige a la pantalla.
+
+### Dibujado
+
+Teniendo un protocolo establecido para comunicarse con la pantalla, es necesario establecer un sistema de dibujado que permita dibujar secciones en la pantalla una y otra vez, por ello se decidió un módulo intermedio a los módulos de control de pantalla y de control de estados del personaje.
+
+En este módulo se identifican las siguientes necesidades:
+
+- Los cambios ejecutados en el módulo del personaje deben ser enviados tan pronto como sea posible a la pantalla
+- Los indicadores de luz y sonido deben "entrar" de manera directa a este módulo a fin de que los respectivos dibujos se dibujen de inmediato. 
+- Debe coordinar acciones "lentas" con acciones "rápidas", es decir, coordinar la velocidad de parpadeo de la pantalla y las animaciones de manera independiente al reloj de la FPGA y al reloj de la pantalla.
+- NO debe tener lógica de juego.
+
+Originalmente se concibió la máquina de estados para el dibujado como una colección de más de 27 estados, uno por cada dibujo posible más uno de inicialización y uno de "IDLE"; sin embargo esta forma de organizar los sprites probó ser terriblemente ineficiente, aunque sencilla y funcional, pero debío ser descartada para favorecer un menor consumo de los limitados elementos combinacionales en la FPGA.
+
+La máquina de estados se redujo a 3 posibles: "INIT" estado de inicialización, "PENCIL" estado de dibujado y "IDLE" estado en el que se analizan los elementos en pantalla para dibujar o no el siguiente elemento; con este método, los elementos combinacionales son mucho menores, pero es necesario tener banco de registros que aloje todos los posibles dibujos a realizar.
+
+
+En Verilog los estados son tres casos que se ejecutan a frecuencia del reloj nativo de la FPGA, usando como sincronizador la señal de avail del módulo de comunicación con la pantalla, INIT cuenta con los pasos requeridos por la pantalla para inicializarla correctamente e inmediatamente procede a decidir que los 
+
 ## Diagramas
 
 ![image](https://github.com/user-attachments/assets/760c7564-6907-47f7-a4dc-71ff579cf3e7)
@@ -160,7 +211,8 @@ Por simplicidad se apartan los modulos de control de la pantalla y las imágenes
 
 Dado que se pretende dibujar constantemente y existen animaciones es necesario generar distintos relojes de distintas frecuencias a fin de coordinar todas las posibles velocidades de juego.
 
-El módulo statemaster es el regulador de los posibles estados y valores pertinentes para el juego, dependiendo de esta información (enviada al módulo sprites) se deciden que gráficos se dibujan.
+El módulo statemaster es el regulador de los posibles estados y valores pertinentes para el juego, dependiendo de esta información (enviada al módulo sprites) se deciden que gráficos se dibujan.![Screenshot from 2024-08-21 19-25-51](https://github.com/user-attachments/assets/6094a395-d408-4780-ad42-6d4042fd5766)
+
 
 
 
