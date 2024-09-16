@@ -152,8 +152,13 @@ Cuando la mascota no se encuentra reaizando ninguna actividad ni tiene ninguna n
 
 ![image](https://github.com/user-attachments/assets/120bfba0-9d98-4145-b4b7-b72424e44615)
 
-## Arquitectura
-### Comunicación SPI
+
+
+## Relojes
+
+
+
+## Comunicación SPI
 
 La comunicación con la pantalla se da mediante el protocolo spi, con la ventaja añadida de no contar con la existencia de MOSI (Master Output Slave Input), puesto que la pantalla es, en todo momento, un elemento pasivo.
 
@@ -185,7 +190,8 @@ Por simplicidad se decidió en la segunda, para mantener consistencia en la lect
 
 Se puede notar que el cambio de mosi se ejecuta al flanco positivo de sclk, que corresponde al reloj que rige a la pantalla.
 
-### Dibujado
+
+## Dibujado
 
 Teniendo un protocolo establecido para comunicarse con la pantalla, es necesario establecer un sistema de dibujado que permita dibujar secciones en la pantalla una y otra vez, por ello se decidió un módulo intermedio a los módulos de control de pantalla y de control de estados del personaje.
 
@@ -193,15 +199,51 @@ En este módulo se identifican las siguientes necesidades:
 
 - Los cambios ejecutados en el módulo del personaje deben ser enviados tan pronto como sea posible a la pantalla
 - Los indicadores de luz y sonido deben "entrar" de manera directa a este módulo a fin de que los respectivos dibujos se dibujen de inmediato. 
-- Debe coordinar acciones "lentas" con acciones "rápidas", es decir, coordinar la velocidad de parpadeo de la pantalla y las animaciones de manera independiente al reloj de la FPGA y al reloj de la pantalla.
+- Debe coordinar acciones "lentas" con acciones "rápidas", es decir, coordinar la velocidad de parpadeo de la pantalla y las animaciones de manera independiente al reloj de la FPGA y al reloj de la pantalla, para simplicidad del lenguaje en esta sección se usará el término "reloj" para referirse a un reloj de tiempo natural, con un período de 1 segundo.
 - NO debe tener lógica de juego.
 
 Originalmente se concibió la máquina de estados para el dibujado como una colección de más de 27 estados, uno por cada dibujo posible más uno de inicialización y uno de "IDLE"; sin embargo esta forma de organizar los sprites probó ser terriblemente ineficiente, aunque sencilla y funcional, pero debío ser descartada para favorecer un menor consumo de los limitados elementos combinacionales en la FPGA.
 
 La máquina de estados se redujo a 3 posibles: "INIT" estado de inicialización, "PENCIL" estado de dibujado y "IDLE" estado en el que se analizan los elementos en pantalla para dibujar o no el siguiente elemento; con este método, los elementos combinacionales son mucho menores, pero es necesario tener banco de registros que aloje todos los posibles dibujos a realizar.
 
+### Parpadeo
 
-En Verilog los estados son tres casos que se ejecutan a frecuencia del reloj nativo de la FPGA, usando como sincronizador la señal de avail del módulo de comunicación con la pantalla, INIT cuenta con los pasos requeridos por la pantalla para inicializarla correctamente e inmediatamente procede a decidir que los 
+El parpadeo, al igual que las animaciones, se rije por el reloj de tiempo natural, se decidió que todos los elementos repetidos parpadasen basandose en un tamagotchi real, con una pantalla similar, que tenía esta característica presuntamente para ahorrar energía, pues la mitad del tiempo no había nada dibujado en la pantalla.
+
+Dado que la pantalla tiene memoria, y mantiene los objetos dibujados en pantalla a menos de que se le indique lo contrario, es necesario indicarle a cada ciclo si debe dibujar los elementos o "borrarlos", siendo necesario aclarar que el término "borrar" no se refiere a enviar el comando borrar a la pantalla siguiendo las instrucciones dadas por el fabricante, pues esto lo que hace es hacer 0 todos los bits en pantalla, en este caso, y durante el resto del documento, borrar significa "dibujar" en blanco secciones específicas de la pantalla; para corazones, caras y huesos borrar significa dibujar un sprite de exactamente el mismo tamaño, pero todo en blanco, en cambio para los niveles de la batería, significa dibujar únicamente los bordes de la batería, pero blanco el interior.
+
+Se sigue este proceso en lugar de borrar toda la pantalla porque no todos los elementos en pantalla deben ser borrados, el único elemento que no tiene una animación asociada y que se mantiene al borrar los elementos parpadeantes es la batería (aunque los niveles en su interior sí parpadean).
+
+### Dibujado de elementos repetidos (corazones, huesos,etc)
+
+Los elementos repetidos son aquellos que indican los niveles de la mascota y se dibujan más de una vez; tienen todos 8 pixels de alto tal y como se puede apreciar en la distribución de elementos en pantalla. A fín hacer este dibujado con un solo sprite, a la hora de dibujar, el módulo sigue el siguiente proceso:
+
+![image](https://github.com/user-attachments/assets/77706040-0ecb-420c-81bc-a2f2b18ee70e)
+
+
+### Dibujado de elementos únicos 
+
+Se denominan elementos únicos a los que aparecen en pantalla únicamente una vez, lo son: la mascota, la batería, el entrenador, la manzana, los globos de dialogo y los indicadores de test, acelerador, luz y sonido.
+
+El dibujado de estos se divide en dos tipos, sprites grandes y pequeños, dependiendo del alto del elemento; la mascota, el entrenador y los globos de diálogo tienen 16 pixels de alto, los demás tan solo 8. En realidad no existe diferencia para dibujar elementos grandes y pequeños, pues un elemento grande es en realidad dos elementos pequeños dibujados coordinadamente, pero debe dibujarse la segunda inmediatamente después de la primera para evitar disonancia, además de que todos los elemenos grandes tienen algún tipo de animación asociada. 
+
+### Animaciones
+
+Las animaciones son cambios en los sprites cuando se ejecutan eventos asociados al reloj de 1 segundo, tienen animaciones la mascota, el entrenador, la manzana y los globos de diálogo.
+
+La mascota tiene animaciones permanenetemente en dos de sus estados, dormido y despierto. Cuando está despierto su animación asemeja un jadeo y depende únicamente en que surco del reloj se encuentre en un determinado momento, mientras que cuando está dormido se rije de una manera diferente a fin de coordinar la velocidad a la que aparecen las "z" que indican que está dormido.
+
+Las 3 "z" son un solo sprite de 13 pixels de ancho y 8 de alto, para simular su aparición se asocia un registro de 2 bits que aumenta su valor permanentemente a son del flanco positivo del reloj e indica cuantas se dibujarán: 1,2,3 o ninguna. De esta manera, el módulo dibuja siempre 13 bits de ancho, pero el registro asociado indica cuantos de estas columnas son parte del sprite y cuantas son borradas. 
+
+Las animaciones asociadas al entrenados y a la manzana funcionan de manera similar con la única diferencia siendo el tipo de dibujado, ya que el entrenador es un sprite grande. Estas animaciones hacen uso de un comparador entre el reloj nativo y el natural para ejecutar cambios en un registro que indica la posición horizontal del elemento, esto a fin de facilitar su manipulación en el código, ya que antes de dibujarse en una posición distinta el elemento es dibujado cientos de veces en una misma posición debido a que el dibujado se hace con el reloj rápido. Al funcionar los comparadores con los cambios de estado del reloj natural, son en si mismos "relojes" con período de medio segundo con la gran diferencia de no ser permanentes (solo están activos cuando lo permiten los eventos asociados).
+
+Para el caso de la manzana, únicamente su posición se altera a ritmo del comparador, en el caso del entrenador tanto su posición como su set de sprites se cambia, para dar la ilusión de caminar.
+
+### Limpieza 
+
+El cambio de estado de mascota, entre estados de dormido, despierto o muerto, y la aparición y desaparición de globos de diálogo, hace necesario que las dos filas de bytes intermedias tengan una "limpieza" constante, al igual que las animaciones esta se ejecuta dos veces por segundo, siendo prácticamente imperceptible gracias a la velocidad de dibujado de la pantalla. 
+
+
 
 ## Diagramas
 
@@ -211,7 +253,7 @@ Por simplicidad se apartan los modulos de control de la pantalla y las imágenes
 
 Dado que se pretende dibujar constantemente y existen animaciones es necesario generar distintos relojes de distintas frecuencias a fin de coordinar todas las posibles velocidades de juego.
 
-El módulo statemaster es el regulador de los posibles estados y valores pertinentes para el juego, dependiendo de esta información (enviada al módulo sprites) se deciden que gráficos se dibujan.![Screenshot from 2024-08-21 19-25-51](https://github.com/user-attachments/assets/6094a395-d408-4780-ad42-6d4042fd5766)
+El módulo statemaster es el regulador de los posibles estados y valores pertinentes para el juego, dependiendo de esta información (enviada al módulo sprites) se deciden que gráficos se dibujan.
 
 
 
