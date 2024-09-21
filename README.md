@@ -1,7 +1,5 @@
 # Entrega 1 Proyecto Tamagotchi
 ## Integrantes 
-* Julian David Monsalve Sanchez
-* Jonathan Andres Jimenez Trujillo
 * Daniel Esteban Hostos
 ## Características Generales
 
@@ -16,14 +14,30 @@ El dispositivo cuenta con los siguientes botones para la interacción del usuari
 Y los siguientes sensores de entorno para interactuar con el mundo real:
 
 - Sensor digital de sonido KY-037
-  ![sound-detection-sensor-module-analog-type-tech3254-2910-1](https://github.com/user-attachments/assets/9c4fbb6a-abda-4235-be87-2685cf2ae8f3)
+
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/9c4fbb6a-abda-4235-be87-2685cf2ae8f3" width="250" height="250">
+  
+</p>
 
 - Sensor digital de luz LM393
-  ![1200](https://github.com/user-attachments/assets/887f02c0-d403-42a8-85f1-0686fdd790e3)
+  
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/887f02c0-d403-42a8-85f1-0686fdd790e3" width="250" height="250">
+  
+</p>
+
+
 
 Para mostrar la información se usará una pantalla monocromática Nokia 5110 de 84x48 pixeles
-  ![PANTALLA-NOKIA-5110](https://github.com/user-attachments/assets/d969fd96-ef69-4490-abf3-62f4e16ec10e)
 
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/d969fd96-ef69-4490-abf3-62f4e16ec10e" width="250" height="250">
+  
+</p>
 
 
 ## Descripción General
@@ -100,7 +114,15 @@ La mascota cuenta con estados y medidores que indican su estado actual y sus nec
 
 Los elementos en la pantalla se distribuirán de la siguiente manera:
 
-![image](https://github.com/user-attachments/assets/2b92ca5f-6cff-45aa-a48e-6803e82b4f9d)
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/2b92ca5f-6cff-45aa-a48e-6803e82b4f9d">
+  
+</p>
+
+
+
+![image]()
 
 TEST en la parte superior indica si se encuentra en una partida o en modo TEST.
 
@@ -156,7 +178,9 @@ Cuando la mascota no se encuentra reaizando ninguna actividad ni tiene ninguna n
 
 ## Relojes
 
+Es necesaria la creación de dos relojes independientes, además del existente por defecto en la FPGA, estos son el reloj de tiempo natural y otro de frecuencia variable, que corresponde al que rige el tiempo de juego, este último puede ser idéntico al reloj natural o tener un período fracción del reloj natural, desde 1/2 hasta 1/16.
 
+Para lograr esto de manera eficiente deben construirse los posibles relojes en base al de menor período, en este caso el de 1/16 de segundo y teniendo en cuenta que el reloj base tiene una frecuencia de 50MHz.
 
 ## Comunicación SPI
 
@@ -204,7 +228,97 @@ En este módulo se identifican las siguientes necesidades:
 
 Originalmente se concibió la máquina de estados para el dibujado como una colección de más de 27 estados, uno por cada dibujo posible más uno de inicialización y uno de "IDLE"; sin embargo esta forma de organizar los sprites probó ser terriblemente ineficiente, aunque sencilla y funcional, pero debío ser descartada para favorecer un menor consumo de los limitados elementos combinacionales en la FPGA.
 
-La máquina de estados se redujo a 3 posibles: "INIT" estado de inicialización, "PENCIL" estado de dibujado y "IDLE" estado en el que se analizan los elementos en pantalla para dibujar o no el siguiente elemento; con este método, los elementos combinacionales son mucho menores, pero es necesario tener banco de registros que aloje todos los posibles dibujos a realizar.
+La máquina de estados se redujo a 3 posibles: "INIT" estado de inicialización, "PENCIL" estado de dibujado y "IDLE" estado en el que se analizan los elementos en pantalla para dibujar o no el siguiente elemento; con este método, los elementos combinacionales son mucho menores, pero es necesario tener banco de registros que aloje todos los posibles dibujos a realizar, este se denomina "sprites".
+
+### INIT 
+
+El estado init de la pantalla se ejecuta únicamente al inicializar o al reiniciar, comprende los pasos requeridos para la inicialización de la pantalla de acuerdo a las instrucciones dadas por el fabricante, además de estos, se dibuja la pantalla completamente de blanco para evitar residuos de dibujos realizados antes del encendido o el reinicio.
+
+![image](https://github.com/user-attachments/assets/9742d9d5-837f-400d-88be-da73de508224)
+
+
+```
+  INIT:begin //configuracion 
+    case(count)
+			4'h0:begin  spistart<=1;	comm<=0; 
+			if (avail) count<=4'h1;
+			end
+			
+			4'h1: begin message<=8'b00100001;
+			if (avail) count<=4'h2;
+			end
+			
+			4'h2:begin  message<=8'b10010000;	 
+			if (avail) count<=4'h3;
+			end
+			
+			4'h3: begin message<=8'b00100000; 
+			if(avail) count<=4'h4;
+			end
+			
+			4'h4: begin	message<=8'b00001100; 
+			if(avail) count<=4'h5;
+			end
+			
+			4'h5: begin	 comm<=1; message<=8'h0;
+			if(avail) begin 
+				if (i<=503) begin 
+					i<=i+1;
+					count<=4'h5;
+					end 
+				else 
+				begin 
+				state<=IDLE;
+				count<=4'h0;
+				i<=0;
+          end
+        end
+      end
+    endcase
+  end
+```
+
+
+### IDLE 
+
+Al finalizar la inicialización y despues de cada dibujo realizado la máquina regresa automáticamente al estado IDLE, en este, se mantiene un proceso estándar para el orden de aparición de las figuras, además de considerar los registros de juego recibidos por el módulo para considerar que debe dibujarse u omitirse, una vez se establece que es lo próximo en ser dibujado se alteran los registros "first_step", "last_step", "y_pos" y "x_pos" requeridos para la figura.
+
+
+### PENCIL
+
+El estado pencil debe ser inicializado con los registros "x_pos", "y_pos", "first_step" y "last_step", los dos primeros indican la posición horizontal y fila para el dibujado, mientras los dos últimos indican la sección del registro "sprites" que se va a dibujar, y se transmiten a la pantalla por medio del registro "message", por otro lado, los registros "spistart" y "comm" siguen siempre el mismo proceso durante los pasos contenidos en el módulo.
+
+Los pasos iniciales del módulo consisten en fijar las coordenadas de posición de la figura, luego se dibuja cada uno de las columnas de 8 bits que corresponden al paso actual, aumentanto en 1 el paso al ser transmitido el mensaje, se finaliza el dibujado cuando el paso enviado es el último paso requerido para la figura.
+
+```
+  PENCIL: begin //dibujar
+    case(count)
+			4'h0: begin spistart<=1; comm<=0; message<=pencil_pos+128;// Coordinates X
+			if(avail) count<=4'h1;
+			end
+			
+			4'h1: begin message <=y_pos +64; // en y 
+			if(avail) count<=4'h2;
+			end
+			
+			4'h2: begin message<=y_pos +64;step<=first_step; // en y 
+			if(avail) count<=4'h3;
+			end
+			
+			4'h3: begin comm<=1; 
+			message<=sprites[step];//dibujo 
+			if(avail)begin
+				step<=step+1;
+				if (step==last_step) begin
+					spistart=0;
+					state<=IDLE;
+					count<=0;
+				end 
+			end		
+			end
+			endcase
+		end
+```
 
 ### Parpadeo
 
