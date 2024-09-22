@@ -116,35 +116,50 @@ Los elementos en la pantalla se distribuirán de la siguiente manera:
 
 <p align="center">
   
-<img src="https://github.com/user-attachments/assets/2b92ca5f-6cff-45aa-a48e-6803e82b4f9d">
+<img src="https://github.com/user-attachments/assets/cc99d2d2-509f-4d1a-ab49-8d831416cbc8">
   
 </p>
 
-
-
-![image]()
-
 TEST en la parte superior indica si se encuentra en una partida o en modo TEST.
 
-x24 en la parte inferior muestra una de las posibles velocidades de juego.
+x2 en la parte inferior muestra una de las posibles velocidades de juego.
 
-Cuando alguno de los medidores de energía, hambre o felicidad se encuentre en 1 se mostrará un estado distinto de la mascota que muestra su necesidad más inmediata, así:
+La bombilla y el parlante representan la activación de los sensores de luz y sonido, respectivamente.
+
+Cuando alguno de los medidores de energía, hambre o felicidad se encuentre en 1 se mostrará un globo de diálogo distinto de la mascota que muestra su necesidad más inmediata, así:
 
 ### Hambriento:
 
-![image](https://github.com/user-attachments/assets/c8a602d3-441e-4bd3-b28b-a8b2708daaf5)
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/66b722b2-06bc-4a45-9ec4-d346d6de176d">
+  
+</p>
 
 ### Somnoliento:
 
-![image](https://github.com/user-attachments/assets/e6b267e9-f2a0-4810-9e7e-61ce8d5bf39e)
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/96073884-245f-4bdd-b2fc-082f08172ba5">
+  
+</p>
 
-### Aburrido (se esconde en su Pokebola):
+### Aburrido:
 
-![image](https://github.com/user-attachments/assets/1da3a721-bac2-4226-b8a3-716ad0921c7b)
+
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/924c19a7-77fe-46f6-b402-c9714f7eb1fe">
+  
+</p>
 
 ### Muerto (al dejar disminuir a 0 cualquiera de los medidores):
 
-![image](https://github.com/user-attachments/assets/87b46f56-cb9d-4e60-b941-cc3f3c336425)
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/87b46f56-cb9d-4e60-b941-cc3f3c336425">
+  
+</p>
 
 Los indicadores de luz y sonido se activarán únicamente cuando exista 1 lógico en su respectivo sensor, de lo contrario no serán dibujados.
 
@@ -152,7 +167,11 @@ Al realizar alguna acción se mostrará una animación distinta que la represent
 
 ### Dormir:
 
-![image](https://github.com/user-attachments/assets/884e8995-121d-4344-b52b-04f9f1506052)
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/70d5c992-3ae9-460e-8e0f-f267693ca930">
+  
+</p>
 
 En el que las "z" parpadean
 
@@ -160,27 +179,121 @@ En el que las "z" parpadean
 
 Una manzana se desplaza a lo largo de la pantalla hasta la mascota
 
-![image](https://github.com/user-attachments/assets/069cdc79-67de-40e5-8820-c3d7554a753b)
+
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/069cdc79-67de-40e5-8820-c3d7554a753b">
+  
+</p>
+
 
 ### Jugar:
 
 Un entrenador camina hacia la mascota y baila con ella unos momentos
 
-![image](https://github.com/user-attachments/assets/4761e8b7-aebb-45f0-90a2-6ed95feac6fb)
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/6301b62a-bc04-45b4-b435-d3c639088781">
+  
+</p>
+
 
 Cuando la mascota no se encuentra reaizando ninguna actividad ni tiene ninguna necesidad inmediata, se quedará quieta moviendo la cola
 
 ### Inactiva:
 
-![image](https://github.com/user-attachments/assets/120bfba0-9d98-4145-b4b7-b72424e44615)
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/120bfba0-9d98-4145-b4b7-b72424e44615">
+  
+</p>
 
+## Caja Negra
 
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/3f140011-a0de-47d9-8534-e61a5d957600">
+  
+</p>
+
+El desarrollo de cada uno de los módulos que componen el proyecto fue realizado por separado, arriba se muestran entonces cada una de las cajas negras correspondientes, además de la caja negra general que encapsula el proyecto en su totalidad.
 
 ## Relojes
 
 Es necesaria la creación de dos relojes independientes, además del existente por defecto en la FPGA, estos son el reloj de tiempo natural y otro de frecuencia variable, que corresponde al que rige el tiempo de juego, este último puede ser idéntico al reloj natural o tener un período fracción del reloj natural, desde 1/2 hasta 1/16.
 
 Para lograr esto de manera eficiente deben construirse los posibles relojes en base al de menor período, en este caso el de 1/16 de segundo y teniendo en cuenta que el reloj base tiene una frecuencia de 50MHz.
+
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/022d0b87-11f3-4ffc-8d5e-4b98e5ef8c99">
+  
+</p>
+
+Mdivisor es el input del cual depende la aceleración, a mayor número, mayor período de reloj; es enteramente dependiente del usuario.
+
+"divisor" es el valor del mínimo divisor posible y corresponde al número 781.250, pues la duración de un semiciclo es de 25.000.000 ciclos de reloj de la FPGA; dado que 25.000.000/781.250 = 32 , es necesario recorrer 32 veces el ciclo para completar un semiciclo de reloj y ejecutar el flanco.
+
+## Registros de Juego
+
+Los registros asociados al juego son, además de los 4 básicos representados por las figuras en la pantalla (salud, hambre, felicidad y energía) todos los relojes asociados a la disminución y aumento de estas acciones, pues cada una de ellas, excepto salud, disminuye a ritmo de un reloj asociado, el cual se reinicia automáticamente cuando dismiye el valor.
+
+Así mismo, el reloj asociado al sueño funciona de manera dual para contabilizar el tiempo requerido para quedarse dormido y el tiempo que lleva dormido para determinar si debe o no recuperar energía.
+
+Play y feed tienen relojes asociados para determinar si el juego permite realizar la acción, de acuerdo a las condiciones especificadas anteriormente.
+
+El registro de salud se rige por una condición simple: inicia en 3 y disminuye en 1 por cada uno de los demás registros que tenga valor 1.
+
+## Pulsado de Botones
+
+### Button_press
+
+Los botones test y reset tienen la particularidad de funcionar únicamente una vez se ha mantenido pulsado durante 5 segundos, mediante la siguiente lógica.
+
+![sprites drawio(6)](https://github.com/user-attachments/assets/27ff64dc-8402-4033-b230-41c7b5dd00cb)
+
+Suponiendo que la "lectura" de los pasos se de una vez por siclo de reloj button_pressed permanece activo por tan solo un ciclo, pues se desactiva inmediatamente, sin embargo, el ciclo de reloj es de periodo 1 segundo. Ya que la lectura de los datos de button_press para ambos botones se realiza mediante el reloj de 50MHz no hay problema para realizar la lectura.
+
+### Antirebote
+
+El botón reset, cuando se pulsa brevemente, tiene la función de aumentar el valor de aceleración, para permitir que aumente en un solo valor por pulsación se limitó la alteración del registro correspondiente a un cambio por segundo, así si se mantiene pulsado el botón, cambiará paulatinamente despúes del primer aumento, que es inmediato. 
+
+
+```
+always @(posedge clock) begin
+	pusher<=pusher+1;
+	if (pusher==150000000) begin
+		allow_press<=1;
+		pusher<=0;
+	end
+```
+
+## Display de tiempo
+
+Los display de 7 segmentos se usan para mostrar el tiempo de juego, por tanto responden al timer de tiempo variable, el módulo de BCDtoSSeg es el mismo usado en previos laboratorios, por tanto se obvia su explicación, sin embargo el módulo de display si se vió alterado, para lograr optimizar la lectura simultánea de horas minutos y segundos sin requerir en exceso los elementos combinacionales, pues en un primer intento el límite de estos se alcanzó tan solo en este módulo.
+
+```
+always @(posedge enable) begin
+	if(rst==0) begin
+		count<= 0;
+		an<=6'b11111; 
+	end else begin
+		count<= count+1;
+		an<=6'b111111; 
+		case (count) 	
+			3'h0: begin bcd <= num[5:0] % 10;   an<=6'b111110; end 
+			3'h1: begin bcd <= (((num[5:0] - (num[5:0] % 10)) / 10) % 10);   an<=6'b111101; end 
+			3'h2: begin bcd <= num[11:6] % 10;  an<=6'b111011; end 
+			3'h3: begin bcd <= (((num[11:6] - (num[11:6] % 10)) / 10) % 10); an<=6'b110111; end 
+			3'h4: begin bcd <= num[17:12] % 10; an<=6'b101111; end
+			3'h5: begin bcd <= (((num[17:12] - (num[17:12] % 10)) / 10)%10); an<=6'b011111; end
+		endcase
+	end
+end
+
+```
+
+La operación para mostrar números de dos dígitos en grupos de dos bits se mantiene de la misma forma que el laboratorio previo, con la diferencia de que este lo extendía para números de 6 dígitos, lo que la hacía terriblemente ineficiente, aquí, "num" es la concatenación de los registros de horas, minutos y segundos, es decir, un número de 18 bits.
 
 ## Comunicación SPI
 
@@ -208,8 +321,6 @@ En este se puede apreciar como toda la lógica se rige con lectura en el surco p
 
 Por simplicidad se decidió en la segunda, para mantener consistencia en la lectura de datos, permanentemente en el flanco positivo.
 
-![Screenshot from 2024-08-21 19-25-51](https://github.com/user-attachments/assets/80fdaa8e-ffda-4477-b110-a80c9fba5295)
-
 ![image](https://github.com/user-attachments/assets/877a0157-4958-40d7-9703-71621a55d97e)
 
 Se puede notar que el cambio de mosi se ejecuta al flanco positivo de sclk, que corresponde al reloj que rige a la pantalla.
@@ -229,6 +340,9 @@ En este módulo se identifican las siguientes necesidades:
 Originalmente se concibió la máquina de estados para el dibujado como una colección de más de 27 estados, uno por cada dibujo posible más uno de inicialización y uno de "IDLE"; sin embargo esta forma de organizar los sprites probó ser terriblemente ineficiente, aunque sencilla y funcional, pero debío ser descartada para favorecer un menor consumo de los limitados elementos combinacionales en la FPGA.
 
 La máquina de estados se redujo a 3 posibles: "INIT" estado de inicialización, "PENCIL" estado de dibujado y "IDLE" estado en el que se analizan los elementos en pantalla para dibujar o no el siguiente elemento; con este método, los elementos combinacionales son mucho menores, pero es necesario tener banco de registros que aloje todos los posibles dibujos a realizar, este se denomina "sprites".
+
+![image](https://github.com/user-attachments/assets/376c2f32-b321-48f1-ad7d-706f498c8c11)
+
 
 ### INIT 
 
@@ -283,6 +397,10 @@ El estado init de la pantalla se ejecuta únicamente al inicializar o al reinici
 
 Al finalizar la inicialización y despues de cada dibujo realizado la máquina regresa automáticamente al estado IDLE, en este, se mantiene un proceso estándar para el orden de aparición de las figuras, además de considerar los registros de juego recibidos por el módulo para considerar que debe dibujarse u omitirse, una vez se establece que es lo próximo en ser dibujado se alteran los registros "first_step", "last_step", "y_pos" y "x_pos" requeridos para la figura.
 
+![image](https://github.com/user-attachments/assets/8f072470-e7cd-4b5e-9988-309344e44ae5)
+
+Nótese que este proceso no cuenta con entradas de reset, esto se debe a que es irrelevante en que zona se inicie a dibujar; las condiciones explicadas para el dibujado o borrado de cada una de las zonas es considerada en el estado.
+
 
 ### PENCIL
 
@@ -320,6 +438,8 @@ Los pasos iniciales del módulo consisten en fijar las coordenadas de posición 
 		end
 ```
 
+## Figuras
+
 ### Parpadeo
 
 El parpadeo, al igual que las animaciones, se rije por el reloj de tiempo natural, se decidió que todos los elementos repetidos parpadasen basandose en un tamagotchi real, con una pantalla similar, que tenía esta característica presuntamente para ahorrar energía, pues la mitad del tiempo no había nada dibujado en la pantalla.
@@ -341,6 +461,18 @@ Se denominan elementos únicos a los que aparecen en pantalla únicamente una ve
 
 El dibujado de estos se divide en dos tipos, sprites grandes y pequeños, dependiendo del alto del elemento; la mascota, el entrenador y los globos de diálogo tienen 16 pixels de alto, los demás tan solo 8. En realidad no existe diferencia para dibujar elementos grandes y pequeños, pues un elemento grande es en realidad dos elementos pequeños dibujados coordinadamente, pero debe dibujarse la segunda inmediatamente después de la primera para evitar disonancia, además de que todos los elemenos grandes tienen algún tipo de animación asociada. 
 
+### Dibujado de indicadores de luz y sonido
+
+#### Sonido
+
+El sensor de sonido funciona de una forma particular, pues en la práctica este no entrega un 1 digital aunque haya un sonido sostenido, en cambio, fluctura en lapsos cortos, a causa de esto, el indicador de sonido en pantalla parpadea de manera indeseada si simplemente se configura un wire del sensor al indicador en pantalla.
+
+Para que el indicador en pantalla se encienda únicamente cuando hay sonido, pero se mantenga encendido por lapsos sostenidos se configuró de la siguiente forma: cuando se haya encendido, tiene que pasar al menos un segundo completo antes de que pueda desaparecer, si el sonido dura varios segundos, el indicador desaparecerá un segundo después de que el sonido haya cesado.
+
+#### Luz
+
+El sensor de luz no sufre este problema y por tanto su implementación tan solo requiere un condicional en el ciclo de IDLE,
+
 ### Animaciones
 
 Las animaciones son cambios en los sprites cuando se ejecutan eventos asociados al reloj de 1 segundo, tienen animaciones la mascota, el entrenador, la manzana y los globos de diálogo.
@@ -353,21 +485,98 @@ Las animaciones asociadas al entrenados y a la manzana funcionan de manera simil
 
 Para el caso de la manzana, únicamente su posición se altera a ritmo del comparador, en el caso del entrenador tanto su posición como su set de sprites se cambia, para dar la ilusión de caminar.
 
+Los globos de diálogo siguen un comportamiento simiar a un parpadeo, sin embargo su funcionamiento es diferente, pues los globos de diálogo deben poder coexistir y aparecer durante lapsos cortos sin sobreponerse unos a otros, lo que es, en realidad, una animación. Para lograr esto, se hace uso de un registro de un solo bit, llamado "alternador" que cambia su valor únicamente en el flanco positivo del reloj natural, siendo por esto en realidad un reloj de periodo 2s; cuando este registro se encuentre en 0, aparecen 2 de los globos, uno durante el tiempo activo del reloj natural y el otro durante su tiempo inactivo, en el siguiente segundo, durante el borde activo, se muestra el globo faltante.  
+
 ### Limpieza 
 
 El cambio de estado de mascota, entre estados de dormido, despierto o muerto, y la aparición y desaparición de globos de diálogo, hace necesario que las dos filas de bytes intermedias tengan una "limpieza" constante, al igual que las animaciones esta se ejecuta dos veces por segundo, siendo prácticamente imperceptible gracias a la velocidad de dibujado de la pantalla. 
 
 
+## Modo Test
 
-## Diagramas
+El modo Test, a diferencia del modo juego, se rige siempre por el reloj de tiempo natural, esto se hace para permitir que ejecución de animaciones ejemplificando el comportamiento de la mascota bajo diferentes condiciones, a modo de tutorial. Para lograr esto, se establece una máquina de estados que cambia de estado cuando se pulsa el boton reset. Debido al reloj usado, para el modo test existe un ligero retraso entre la pulsación y el reflejo de la acción. 
 
-![image](https://github.com/user-attachments/assets/760c7564-6907-47f7-a4dc-71ff579cf3e7)
+Cuando se ejecutan las acciones pertinentes a recuperar energía, alimentarse o jugar, los indicadores de estado aumentan a ritmo de 1 por segundo, reiniciando a 0 cuando se intenta superar su valor máximo.
 
-Por simplicidad se apartan los modulos de control de la pantalla y las imágenes a ser mostradas en la misma, los gráficos, contenidos en el módulo sprites, contienen los pasos para dibujar cada uno de los gráficos, y envía la información al módulo de control spi, manteniendo dibujando a la pantalla constantemente.
+```
+if (test_mode) begin
+		case (test_case) 
+	1:begin
+		test_pet_state <= DEAD;
+		test_health <= 0;
+		test_happiness <=0;
+		test_hunger <= 0;
+		test_energy <= 0;
+	end
+		
+	2:begin
+		test_pet_state <= STAY;
+		test_hungry<=1;
+		test_health <= 3;
+		test_happiness <=3;
+		test_hunger <= 1;
+		test_energy <= 4;
+	end
+			
+	3:begin
+		test_sleepy <= 1;
+		test_health <= 3;
+		test_happiness <=3;
+		test_hunger <= 3;
+		test_hungry <=0;
+		test_energy <= 1;
+	end
+	
+	4:begin
+		test_sleepy <= 0;
+		test_energy <= 4;
+		test_happiness <= 1;
+		test_bored <= 1;
+	end
+	
+	5:begin
+		test_hungry<=1;
+		test_hunger<=1;
+		test_energy<=1;
+		test_sleepy<=1;
+	end 
+	
+	6:begin
+		test_play<=1;
+		test_bored<=0;
+		test_happiness <= happiness+1;
+	end 
+	
+	7:begin
+		test_play <=0;
+		test_happiness <=3;
+		test_sleepy <= 0;
+		test_pet_state<= ASLEEP;
+		test_energy <= energy+1;
+	end
+	
+	8:begin
+		test_energy<=4;
+		test_pet_state<=STAY;
+		test_feed<=1;
+		test_hunger<= test_hunger+1;
+		test_hungry <= 0;
+	end
+	
+	9:begin
+		test_feed<=0;
+		test_hunger<= 3;
+		test_hungry <= 0;
+		test_hunger <=2;
+		test_energy <=3;
+		test_health <=2;
+		test_happiness <=2;
+	end
+	endcase
+end
 
-Dado que se pretende dibujar constantemente y existen animaciones es necesario generar distintos relojes de distintas frecuencias a fin de coordinar todas las posibles velocidades de juego.
+```
 
-El módulo statemaster es el regulador de los posibles estados y valores pertinentes para el juego, dependiendo de esta información (enviada al módulo sprites) se deciden que gráficos se dibujan.
 
 
 
