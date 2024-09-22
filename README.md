@@ -234,6 +234,10 @@ Mdivisor es el input del cual depende la aceleración, a mayor número, mayor pe
 
 "divisor" es el valor del mínimo divisor posible y corresponde al número 781.250, pues la duración de un semiciclo es de 25.000.000 ciclos de reloj de la FPGA; dado que 25.000.000/781.250 = 32 , es necesario recorrer 32 veces el ciclo para completar un semiciclo de reloj y ejecutar el flanco.
 
+![image](https://github.com/user-attachments/assets/8351269a-f61a-44dc-88bb-cb3b524daa9d)
+
+Lamentablemente fue imposible la simulación de múltiples ciclos de reloj natural, debido al peso del archivo resultante.
+
 ## Registros de Juego
 
 Los registros asociados al juego son, además de los 4 básicos representados por las figuras en la pantalla (salud, hambre, felicidad y energía) todos los relojes asociados a la disminución y aumento de estas acciones, pues cada una de ellas, excepto salud, disminuye a ritmo de un reloj asociado, el cual se reinicia automáticamente cuando dismiye el valor.
@@ -244,13 +248,100 @@ Play y feed tienen relojes asociados para determinar si el juego permite realiza
 
 El registro de salud se rige por una condición simple: inicia en 3 y disminuye en 1 por cada uno de los demás registros que tenga valor 1.
 
+```
+// CONDICIONALES DE JUEGO
+			
+if (pet_state==STAY & sleep_min==3)begin
+	sleep_min<=0;
+	pet_state<=ASLEEP;
+end
+
+if (pet_state==ASLEEP & sleep_hour==3)begin
+	sleep_hour<=0;
+	if (energy<4) energy<=energy+1;
+end
+
+if (feed_animation & feed_able) begin
+	if (hunger < 3) hunger<=hunger+1;
+	feed_able<=0;
+	feed_sec<=0;
+	feed_min<=0;
+	feed_hour<=0;
+	
+	hunger_sec<=0;
+	hunger_min<=0;
+	hunger_hour<=0;
+	
+end
+
+if (play_animation & play_able) begin
+	if (happiness < 3) happiness<=happiness+1;
+	play_able<=0;
+	play_sec<=0;
+	play_min<=0;
+	play_hour<=0;
+	
+	happiness_sec<=0;
+	happiness_min<=0;
+	happiness_hour<=0;
+	
+end
+// Tiempo antes de poder jugar de nuevo
+if (play_hour == 2)begin
+	play_hour <= 0;
+	play_able <= 1;
+end
+// Tiempo antes de poder alimentar de nuevo
+if (feed_hour == 2)begin
+	feed_hour <= 0;
+	feed_able <= 1;
+end
+// Tiempo para perder un hueso
+if (hunger>0) begin
+	if (hunger_hour == 8)begin
+		hunger_hour <= 0;
+		hunger <= hunger-1;
+	end
+end
+// Tiempo para perder una cara
+if (happiness>0) begin
+	if (happiness_hour == 1)begin
+		happiness_hour <= 0;
+		happiness <= happiness-1;
+	end
+end
+//Tiempo para perder un nivel de energia
+if (energy>0) begin
+	if (energy_hour == 6)begin
+		energy_hour <= 0;
+		energy <= energy-1;
+	end
+end
+// Condicionales de muerte
+if (happiness==0 || health==0 || hunger==0 || energy==0) begin
+	hunger<=0;
+	health<=0;
+	happiness<=0;
+	energy<=0;
+	pet_state<=DEAD;
+end
+
+```
+
+De esta manera es muy sencillo alterar los tiempos requeridos para la disminución de niveles asociados a la mascota, pues se trata de un simple condicional, al igual que para alterar los tiempos mínimos entre una acción y la siguiente.
+
+
 ## Pulsado de Botones
 
 ### Button_press
 
 Los botones test y reset tienen la particularidad de funcionar únicamente una vez se ha mantenido pulsado durante 5 segundos, mediante la siguiente lógica.
 
-![sprites drawio(6)](https://github.com/user-attachments/assets/27ff64dc-8402-4033-b230-41c7b5dd00cb)
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/27ff64dc-8402-4033-b230-41c7b5dd00cb">
+  
+</p>
 
 Suponiendo que la "lectura" de los pasos se de una vez por siclo de reloj button_pressed permanece activo por tan solo un ciclo, pues se desactiva inmediatamente, sin embargo, el ciclo de reloj es de periodo 1 segundo. Ya que la lectura de los datos de button_press para ambos botones se realiza mediante el reloj de 50MHz no hay problema para realizar la lectura.
 
@@ -313,7 +404,11 @@ Serial Clock: Reloj que rige todos los procesos de la pantalla.
 
 La pantalla requiere un pulso de RES inmediatamente después de inicializar, junto a un set específico de comandos inmediatamente después para que se ejecute la pantalla en modo “normal”, es decir, con dibujado horizontal y modo normal de coloreado, estos son especificados por el fabricante:
 
-![Screenshot from 2024-08-21 20-41-57](https://github.com/user-attachments/assets/8c1132ff-ee28-411c-85b9-6244307632c2)
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/8c1132ff-ee28-411c-85b9-6244307632c2">
+  
+</p>
 
 La lectura de datos se ejecuta de acuerdo al siguiente gráfico especificado por el fabricante 
 
@@ -321,7 +416,11 @@ En este se puede apreciar como toda la lógica se rige con lectura en el surco p
 
 Por simplicidad se decidió en la segunda, para mantener consistencia en la lectura de datos, permanentemente en el flanco positivo.
 
-![image](https://github.com/user-attachments/assets/877a0157-4958-40d7-9703-71621a55d97e)
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/877a0157-4958-40d7-9703-71621a55d97e">
+  
+</p>
 
 Se puede notar que el cambio de mosi se ejecuta al flanco positivo de sclk, que corresponde al reloj que rige a la pantalla.
 
@@ -341,15 +440,24 @@ Originalmente se concibió la máquina de estados para el dibujado como una cole
 
 La máquina de estados se redujo a 3 posibles: "INIT" estado de inicialización, "PENCIL" estado de dibujado y "IDLE" estado en el que se analizan los elementos en pantalla para dibujar o no el siguiente elemento; con este método, los elementos combinacionales son mucho menores, pero es necesario tener banco de registros que aloje todos los posibles dibujos a realizar, este se denomina "sprites".
 
-![image](https://github.com/user-attachments/assets/376c2f32-b321-48f1-ad7d-706f498c8c11)
+
+
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/376c2f32-b321-48f1-ad7d-706f498c8c11">
+  
+</p>
 
 
 ### INIT 
 
 El estado init de la pantalla se ejecuta únicamente al inicializar o al reiniciar, comprende los pasos requeridos para la inicialización de la pantalla de acuerdo a las instrucciones dadas por el fabricante, además de estos, se dibuja la pantalla completamente de blanco para evitar residuos de dibujos realizados antes del encendido o el reinicio.
 
-![image](https://github.com/user-attachments/assets/9742d9d5-837f-400d-88be-da73de508224)
-
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/9742d9d5-837f-400d-88be-da73de508224">
+  
+</p>
 
 ```
   INIT:begin //configuracion 
@@ -397,7 +505,13 @@ El estado init de la pantalla se ejecuta únicamente al inicializar o al reinici
 
 Al finalizar la inicialización y despues de cada dibujo realizado la máquina regresa automáticamente al estado IDLE, en este, se mantiene un proceso estándar para el orden de aparición de las figuras, además de considerar los registros de juego recibidos por el módulo para considerar que debe dibujarse u omitirse, una vez se establece que es lo próximo en ser dibujado se alteran los registros "first_step", "last_step", "y_pos" y "x_pos" requeridos para la figura.
 
-![image](https://github.com/user-attachments/assets/8f072470-e7cd-4b5e-9988-309344e44ae5)
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/8f072470-e7cd-4b5e-9988-309344e44ae5">
+  
+</p>
+
+
 
 Nótese que este proceso no cuenta con entradas de reset, esto se debe a que es irrelevante en que zona se inicie a dibujar; las condiciones explicadas para el dibujado o borrado de cada una de las zonas es considerada en el estado.
 
@@ -452,7 +566,14 @@ Se sigue este proceso en lugar de borrar toda la pantalla porque no todos los el
 
 Los elementos repetidos son aquellos que indican los niveles de la mascota y se dibujan más de una vez; tienen todos 8 pixels de alto tal y como se puede apreciar en la distribución de elementos en pantalla. A fín hacer este dibujado con un solo sprite, a la hora de dibujar, el módulo sigue el siguiente proceso:
 
-![image](https://github.com/user-attachments/assets/77706040-0ecb-420c-81bc-a2f2b18ee70e)
+
+<p align="center">
+  
+<img src="https://github.com/user-attachments/assets/77706040-0ecb-420c-81bc-a2f2b18ee70e">
+  
+</p>
+
+
 
 
 ### Dibujado de elementos únicos 
